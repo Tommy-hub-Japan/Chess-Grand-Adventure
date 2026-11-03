@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>グランド・チェス・オデッセイ 〜賢佑と伝説のチェス海賊団〜</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@500;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <!-- パーティクル＆カットイン演出レイヤー -->
+  <canvas id="fx-canvas"></canvas>
+
+  <div id="cutin-overlay" class="hidden">
+    <div class="cutin-banner">
+      <div class="cutin-icon" id="cutin-icon">⚔️</div>
+      <div class="cutin-text">
+        <div class="cutin-sub" id="cutin-sub">SPECIAL ATTACK!</div>
+        <div class="cutin-main" id="cutin-main">ナイスキャプチャー！！</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- セーブ完了トースト通知 -->
+  <div id="save-toast" class="save-toast hidden">💾 冒険の記録をセーブしました！</div>
+
+  <!-- =========================================================
+       ① アニメーション・オープニング＆タイトル画面（全画面）
+       ========================================================= -->
+  <div id="title-screen-overlay" class="full-overlay">
+    <div class="title-sky-bg">
+      <div class="stars-layer"></div>
+      <div class="floating-chess-islands">
+        <div class="float-piece p1" id="title-float-1"></div>
+        <div class="float-piece p2" id="title-float-2"></div>
+        <div class="float-piece p3" id="title-float-3"></div>
+      </div>
+      <div class="ocean-waves">
+        <div class="wave wave1"></div>
+        <div class="wave wave2"></div>
+      </div>
+    </div>
+
+    <div class="title-center-card">
+      <div class="title-crown-badge">👑 GRAND CHESS ODYSSEY 👑</div>
+      <h1 class="game-main-logo">
+        <span class="logo-top">グランド・チェス・オデッセイ</span>
+        <span class="logo-sub">〜賢佑と伝説のチェス海賊団〜</span>
+      </h1>
+
+      <!-- タイトル画面で躍動する3D風キャラクターショーケース -->
+      <div class="title-characters-stage" id="title-chars-stage"></div>
+
+      <p class="title-catchphrase">
+        「なぜそうなるのか？」を深く考え抜く<strong>【論理の力】</strong>で6つの海を制覇し、<br>
+        伝説の秘宝<strong>『チェックメイト・クラウン』</strong>と<strong>『現実世界のごほうび』</strong>を手に入れよう！
+      </p>
+
+      <div class="title-menu-buttons">
+        <button class="title-btn new-game-btn" onclick="Game.startNewGameFromTitle()">
+          <span class="t-icon">⚔️</span>
+          <div class="t-label">
+            <strong>最初から冒険をはじめる</strong>
+            <small>オープニング物語を見て第1章からスタート！</small>
+          </div>
+        </button>
+
+        <button class="title-btn continue-btn" id="btn-continue-game" onclick="Game.continueGameFromTitle()">
+          <span class="t-icon">📖</span>
+          <div class="t-label">
+            <strong>続きから冒険する</strong>
+            <small id="continue-save-summary">セーブデータを確認中...</small>
+          </div>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       ② 第1章開始時・ストーリー導入アニメーションシアター（全画面）
+       ========================================================= -->
+  <div id="prologue-overlay" class="full-overlay hidden">
+    <div class="prologue-stage">
+      <div class="prologue-progress" id="prologue-dots"></div>
+      <div class="prologue-visual-box" id="prologue-visual"></div>
+      <div class="prologue-dialog-box">
+        <div class="prologue-speaker" id="prologue-speaker">語り部</div>
+        <p class="prologue-text" id="prologue-text"></p>
+        <div class="prologue-controls">
+          <button class="secondary-btn" onclick="Game.skipPrologue()">⏩ スキップ</button>
+          <button class="primary-btn large" id="prologue-next-btn" onclick="Game.nextPrologueSlide()">次へ進む ▶</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =========================================================
+       ③ 各ステージ開始時・VSバトル突入アニメーション画面（全画面）
+       ========================================================= -->
+  <div id="battle-intro-overlay" class="full-overlay hidden">
+    <div class="vs-arena-bg">
+      <div class="vs-lightning"></div>
+      <div class="vs-stage-banner" id="vs-stage-banner">STAGE 1：始まりの港・ポーンと中央制圧の海</div>
+
+      <div class="vs-combatants">
+        <!-- 左：キャプテン・ケンスケ＆相棒 -->
+        <div class="vs-fighter player-side">
+          <div class="vs-char-sprite" id="vs-player-sprite"></div>
+          <div class="vs-name-plate blue">
+            <div class="vs-role">論理と長考の若き海賊王候補</div>
+            <div class="vs-name">キャプテン・ケンスケ</div>
+          </div>
+        </div>
+
+        <div class="vs-emblem">VS</div>
+
+        <!-- 右：ステージボス -->
+        <div class="vs-fighter boss-side">
+          <div class="vs-char-sprite" id="vs-boss-sprite"></div>
+          <div class="vs-name-plate red">
+            <div class="vs-role" id="vs-boss-title">バラバラ陣形のルーキー海賊</div>
+            <div class="vs-name" id="vs-boss-name">道化のバロン船長</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ボスの挑戦セリフ＆対話ボックス -->
+      <div class="vs-speech-card">
+        <div class="vs-speech-speaker" id="vs-speech-speaker">道化のバロン船長の挑戦状！</div>
+        <p class="vs-speech-text" id="vs-speech-text"></p>
+        <div class="vs-mission-goal" id="vs-mission-goal"></div>
+        <button class="vs-start-btn" onclick="Game.enterChessBoardFromIntro()">
+          ⚔️ いざ、チェスバトル開始！！（盤面へ突入）
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- トップステータスバー（常時表示・いつでもセーブ可能） -->
+  <header class="top-bar">
+    <div class="player-badge" onclick="UI.openModal('status-modal')">
+      <div class="avatar-ring" id="top-player-avatar"></div>
+      <div class="player-info">
+        <div class="player-title" id="top-title">見習いチェス航海士</div>
+        <div class="player-name-lv">
+          <span class="name">キャプテン・ケンスケ</span>
+          <span class="lv-pill" id="top-lv">Lv.1</span>
+        </div>
+        <div class="exp-bar-wrap">
+          <div class="exp-bar-fill" id="top-exp-bar" style="width: 0%"></div>
+          <span class="exp-bar-text" id="top-exp-text">EXP 0 / 100</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="top-resources">
+      <div class="gold-pill" onclick="UI.switchScreen('shop')">
+        <span class="coin-icon">🪙</span>
+        <span id="top-gold">0</span>
+        <span class="unit">G</span>
+      </div>
+      <button class="nav-btn save-btn" onclick="Game.manualSaveWithFeedback()" title="物語や盤面の途中でもセーブできます">💾 セーブ</button>
+      <button class="nav-btn" onclick="UI.openModal('status-modal')" title="ステータス確認">📊 能力・仲間</button>
+      <button class="nav-btn" onclick="UI.openModal('guide-modal')" title="チェス図鑑・ルール">📖 ルール図鑑</button>
+      <button class="nav-btn audio-btn" id="bgm-toggle-btn" onclick="Sound.toggleBGM()">🔊 交響曲ON</button>
+      <button class="nav-btn voice-btn" id="voice-toggle-btn" onclick="Sound.toggleVoice()">🗣️ ボイスON</button>
+      <button class="nav-btn" onclick="Game.returnToTitleScreen()">🏠 タイトルへ</button>
+    </div>
+  </header>
+
+  <!-- メインナビゲーションタブ -->
+  <nav class="main-tabs">
+    <button class="tab-btn active" data-screen="map" onclick="UI.switchScreen('map')">🗺️ 冒険の海（進行中の章）</button>
+    <button class="tab-btn" data-screen="battle" id="tab-btn-battle" onclick="UI.switchScreen('battle')">⚔️ バトル盤面</button>
+    <button class="tab-btn" data-screen="puzzle" onclick="UI.switchScreen('puzzle')">🧩 論理パズル道場</button>
+    <button class="tab-btn" data-screen="shop" onclick="UI.switchScreen('shop')">🏪 ショップ＆ごほうび交換</button>
+  </nav>
+
+  <!-- 画面コンテナ -->
+  <main class="screen-container">
+    
+    <!-- ① 冒険マップ画面（クリアした章＋現在挑戦中の章のみ表示し、先の章はクリア後に解放） -->
+    <section id="screen-map" class="screen active">
+      <div class="map-hero">
+        <div class="map-hero-content">
+          <h1>🌊 グランド・チェス・オデッセイ 〜航海日誌〜</h1>
+          <p id="map-current-goal-banner">現在の目的：第1章を攻略し、次の海域への羅針盤を手に入れよう！</p>
+        </div>
+        <div class="crew-showcase" id="map-crew-list"></div>
+      </div>
+
+      <div class="stage-grid" id="stage-grid">
+        <!-- JSで現在解放されている章カードのみを生成 -->
+      </div>
+    </section>
+
+    <!-- ② チェスバトル画面 -->
+    <section id="screen-battle" class="screen">
+      <div class="battle-layout">
+        
+        <!-- 左カラム：敵情報＆視覚サポート＆必殺アイテム -->
+        <aside class="battle-left-panel">
+          <!-- 敵ボスカード（アニメーションSVG付き） -->
+          <div class="boss-card">
+            <div class="boss-header">
+              <div class="boss-avatar-svg-wrap" id="boss-avatar"></div>
+              <div class="boss-meta">
+                <div class="boss-stage-label" id="boss-stage-label">STAGE 1</div>
+                <div class="boss-name" id="boss-name">道化のバロン船長</div>
+                <div class="boss-title" id="boss-title">バラバラ陣形のルーキー海賊</div>
+              </div>
+            </div>
+            <div class="boss-hp-wrap">
+              <div class="hp-label"><span>敵戦力ゲージ</span><span id="boss-hp-text">100%</span></div>
+              <div class="hp-bar-bg"><div class="hp-bar-fill" id="boss-hp-bar" style="width:100%"></div></div>
+            </div>
+            <div class="boss-speech" id="boss-speech"></div>
+          </div>
+
+          <!-- 視空間サポートパネル（VSI 94を論理・グリッドで補完） -->
+          <div class="support-box">
+            <h3>🔍 視空間サポート（図形・ライン表示）</h3>
+            <p class="support-desc">駒の動くラインや危険なマスを色と境界線でハッキリ表示するよ！</p>
+            <div class="toggle-list">
+              <label class="toggle-item">
+                <input type="checkbox" id="opt-show-moves" checked onchange="Game.updateSupportOptions()">
+                <span>🟢 動けるマス＆矢印ガイド</span>
+              </label>
+              <label class="toggle-item">
+                <input type="checkbox" id="opt-show-danger" checked onchange="Game.updateSupportOptions()">
+                <span>🔴 敵に狙われている危険マス</span>
+              </label>
+              <label class="toggle-item">
+                <input type="checkbox" id="opt-show-zones" checked onchange="Game.updateSupportOptions()">
+                <span>🟨 中央エリア（センター4マス）強調</span>
+              </label>
+              <label class="toggle-item">
+                <input type="checkbox" id="opt-think-frame" onchange="Game.updateSupportOptions()">
+                <span>🧠 作戦会議モード（言語化フレーム）</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 必殺サポート＆アイテムボタン -->
+          <div class="action-items-box">
+            <h3>🎒 仲間スキル＆サポートアイテム</h3>
+            <div class="item-buttons-grid">
+              <button class="skill-btn hint-btn" onclick="Game.requestAdvisorHint()">
+                <span class="btn-icon">💡</span>
+                <div class="btn-label">
+                  <strong>仲間の作戦アドバイス</strong>
+                  <small>理由と言葉で最善手を解説（無料）</small>
+                </div>
+              </button>
+              <button class="skill-btn undo-btn" onclick="Game.useUndo()">
+                <span class="btn-icon">⏳</span>
+                <div class="btn-label">
+                  <strong>時の砂時計（1手戻す）</strong>
+                  <small>所持数: <span id="item-count-undo">5</span>個</small>
+                </div>
+              </button>
+              <button class="skill-btn radar-btn" onclick="Game.useFutureEye()">
+                <span class="btn-icon">🦅</span>
+                <div class="btn-label">
+                  <strong>ワシの未来予測アイ</strong>
+                  <small>上位2手の評価値と比較を表示 (<span id="item-count-eye">3</span>個)</small>
+                </div>
+              </button>
+              <button class="skill-btn barrier-btn" onclick="Game.manualSaveWithFeedback()">
+                <span class="btn-icon">💾</span>
+                <div class="btn-label">
+                  <strong>この盤面で途中セーブする</strong>
+                  <small>いつでも続きから再開できるよ</small>
+                </div>
+              </button>
+            </div>
+          </div>
+        </aside>
+
+        <!-- 中央カラム：3Dキャラ駒が動くチェス盤面 -->
+        <div class="battle-center-panel">
+          <div class="turn-banner" id="turn-banner">
+            <div class="turn-status" id="turn-status">⚪ あなたの番です（白）</div>
+            <div class="deep-think-badge" id="deep-think-badge">
+              🧠 <strong>時間制限なし！</strong> じっくり納得するまで考え抜こう！ <span id="think-timer">思考中: 0秒</span>
+            </div>
+          </div>
+
+          <div class="board-outer-frame" id="board-theme-wrapper">
+            <div class="coord-files top">
+              <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>
+            </div>
+            <div class="board-middle-row">
+              <div class="coord-ranks left">
+                <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+              </div>
+
+              <div class="board-container">
+                <div id="chess-board" class="chess-board"></div>
+                <svg id="board-svg-overlay" class="board-svg-overlay" viewBox="0 0 800 800" preserveAspectRatio="none">
+                  <defs>
+                    <marker id="arrow-green" markerWidth="6" markerHeight="6" refX="4.5" refY="3" orient="auto">
+                      <path d="M0,0 L6,3 L0,6 Z" fill="#22c55e" />
+                    </marker>
+                    <marker id="arrow-gold" markerWidth="6" markerHeight="6" refX="4.5" refY="3" orient="auto">
+                      <path d="M0,0 L6,3 L0,6 Z" fill="#f59e0b" />
+                    </marker>
+                  </defs>
+                  <g id="svg-arrows-group"></g>
+                </svg>
+              </div>
+
+              <div class="coord-ranks right">
+                <span>8</span><span>7</span><span>6</span><span>5</span><span>4</span><span>3</span><span>2</span><span>1</span>
+              </div>
+            </div>
+            <div class="coord-files bottom">
+              <span>A</span><span>B</span><span>C</span><span>D</span><span>E</span><span>F</span><span>G</span><span>H</span>
+            </div>
+          </div>
+
+          <div class="captured-bar">
+            <div class="captured-group">
+              <span class="cap-label">仲間にした敵駒:</span>
+              <div id="captured-by-player" class="cap-icons"></div>
+            </div>
+            <div class="combo-badge" id="combo-badge">🔥 無双コンボ: 0</div>
+            <div class="captured-group">
+              <span class="cap-label">敵に取られた駒:</span>
+              <div id="captured-by-enemy" class="cap-icons"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 右カラム：アニメーション仲間アドバイザー＆言語ルール＆棋譜 -->
+        <aside class="battle-right-panel">
+          <div class="advisor-card">
+            <div class="advisor-header">
+              <div class="advisor-avatar-svg-wrap" id="advisor-avatar"></div>
+              <div class="advisor-info">
+                <div class="advisor-role" id="advisor-role-label">現在のサポート仲間</div>
+                <div class="advisor-name" id="advisor-name">蒼天のワシ・イーグル</div>
+              </div>
+              <button class="change-crew-btn" onclick="Game.cycleAdvisor()">🔄 交代</button>
+            </div>
+            <div class="advisor-speech-box">
+              <p id="advisor-message">「キャプテン！まずは中央の4マス（D4, E4, D5, E5）を目指してポーンやナイトを進めてみよう！」</p>
+              <button class="read-aloud-btn" onclick="Sound.speakCurrentAdvice()">🔊 ポップ音声で聞く（日・英）</button>
+            </div>
+          </div>
+
+          <div class="piece-logic-card" id="piece-logic-card">
+            <div class="plc-header">
+              <div class="plc-icon" id="plc-icon">♙</div>
+              <div>
+                <div class="plc-name" id="plc-name">3Dキャラ駒をタップしてみよう！</div>
+                <div class="plc-sub" id="plc-sub">言葉と法則で動きがわかるよ</div>
+              </div>
+            </div>
+            <div class="plc-body" id="plc-body">
+              盤面の3Dキャラクター駒をタップすると、その駒の「動きの法則（アルゴリズム）」「価値ポイント」「今狙えるマス」をここに言葉で詳しく表示します！
+            </div>
+          </div>
+
+          <div class="move-history-card">
+            <div class="mh-header">
+              <span>📜 論理の棋譜（手の記録）</span>
+              <button class="mini-btn" onclick="Game.restartStage()">🔄 章の最初から</button>
+            </div>
+            <div class="move-list" id="move-list"></div>
+          </div>
+        </aside>
+
+      </div>
+    </section>
+
+    <!-- ③ 論理パズル道場 -->
+    <section id="screen-puzzle" class="screen">
+      <div class="puzzle-header-card">
+        <div>
+          <h2>🧩 論理パズル道場 〜1手でチェックメイトの法則を見抜け！〜</h2>
+          <p>賢佑くんの最大の武器「法則発見・論理推理力」をフル発揮！なぜその手がチェックメイトになるのか、言葉のヒントを手がかりに解き明かそう！</p>
+        </div>
+      </div>
+      <div class="puzzle-grid" id="puzzle-grid"></div>
+    </section>
+
+    <!-- ④ ショップ＆リアルごほうび交換画面 -->
+    <section id="screen-shop" class="screen">
+      <div class="shop-layout">
+        <div class="shop-section">
+          <div class="section-title-bar">
+            <h2>🏪 船上アイテム＆盤面カスタマイズショップ</h2>
+            <p>バトルや好手で貯めたゴールドを使って、冒険に役立つアイテムやカッコいい盤面テーマを手に入れよう！</p>
+          </div>
+          <div class="shop-items-grid" id="shop-items-grid"></div>
+        </div>
+
+        <div class="shop-section real-reward-section">
+          <div class="section-title-bar gold-theme">
+            <h2>🎁 リアル世界ごほうび交換所（お父さん・お母さんチケット）</h2>
+            <p>一定のゴールドを貯めると、現実の世界で使える特別な「ごほうびチケット（好きな本を1冊購入など）」と交換できるよ！</p>
+          </div>
+          <div class="real-rewards-grid" id="real-rewards-grid"></div>
+
+          <div class="tickets-box">
+            <h3>🎟️ 獲得したリアルごほうびチケット帳</h3>
+            <div id="redeemed-tickets-list" class="tickets-list"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- モーダル1：思考の言語化フレーム -->
+  <div id="think-frame-modal" class="modal-backdrop hidden">
+    <div class="modal-card think-modal">
+      <div class="modal-header">
+        <h2>🧠 キャプテン作戦会議！（思考の言語化フレーム）</h2>
+        <button class="close-btn" onclick="UI.closeModal('think-frame-modal')">✖</button>
+      </div>
+      <div class="modal-body">
+        <p class="think-intro">手を選んだ理由を3つのステップで選ぶと、<strong>「論理思考ボーナス（+25 EXP / +20 G）」</strong>がもらえるよ！</p>
+        <div class="think-step">
+          <div class="step-label">① 結論（どの手を選んだ？）</div>
+          <div class="step-value" id="tf-conclusion">ナイトを F3 に動かす！</div>
+        </div>
+        <div class="think-step">
+          <div class="step-label">② 着目点（盤面のどこに注目した？）</div>
+          <div class="choice-pills" id="tf-focus-choices">
+            <button class="pill-choice selected" onclick="Game.selectThinkChoice('focus', 0, this)">🎯 敵の無防備な駒・スキ</button>
+            <button class="pill-choice" onclick="Game.selectThinkChoice('focus', 1, this)">🟨 盤面の中央エリア（センター）</button>
+            <button class="pill-choice" onclick="Game.selectThinkChoice('focus', 2, this)">🛡️ 自分のキング・味方の守り</button>
+          </div>
+        </div>
+        <div class="think-step">
+          <div class="step-label">③ 理由（なぜその手が良いと考えたの？）</div>
+          <div class="choice-pills" id="tf-reason-choices">
+            <button class="pill-choice selected" onclick="Game.selectThinkChoice('reason', 0, this)">⚔️ 価値の高い駒を安全に取れる／攻められるから</button>
+            <button class="pill-choice" onclick="Game.selectThinkChoice('reason', 1, this)">🚀 眠っている駒を前に出して働かせるため</button>
+            <button class="pill-choice" onclick="Game.selectThinkChoice('reason', 2, this)">👑 敵の攻撃コースをふさいで安全にするため</button>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="primary-btn large" onclick="Game.confirmMoveWithThinkBonus()">✨ この作戦で手を打つ！（ボーナス獲得）</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル2：プレイヤー能力・ステータス＆仲間図鑑 -->
+  <div id="status-modal" class="modal-backdrop hidden">
+    <div class="modal-card large-modal">
+      <div class="modal-header">
+        <h2>📊 キャプテン・ケンスケの能力ステータス＆仲間図鑑</h2>
+        <button class="close-btn" onclick="UI.closeModal('status-modal')">✖</button>
+      </div>
+      <div class="modal-body status-modal-body">
+        <div class="status-grid">
+          <div class="status-profile-card">
+            <div class="big-avatar-svg" id="status-player-svg"></div>
+            <h3 id="st-name">キャプテン・ケンスケ</h3>
+            <div class="st-title-badge" id="st-title">見習いチェス航海士</div>
+            <div class="st-level-line">レベル <strong id="st-lv">1</strong> （累計EXP: <span id="st-total-exp">0</span>）</div>
+            <div class="st-stats-bars">
+              <div class="stat-row">
+                <span class="stat-name">🧠 論理推理力 (Logic)</span>
+                <div class="stat-bar"><div class="stat-fill logic" id="stat-bar-logic" style="width:75%"></div></div>
+                <span class="stat-val" id="stat-val-logic">151</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-name">🎧 記憶・先読み力 (Memory)</span>
+                <div class="stat-bar"><div class="stat-fill memory" id="stat-bar-memory" style="width:65%"></div></div>
+                <span class="stat-val" id="stat-val-memory">126</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-name">⚡ 戦術コンボ力 (Tactics)</span>
+                <div class="stat-bar"><div class="stat-fill tactics" id="stat-bar-tactics" style="width:55%"></div></div>
+                <span class="stat-val" id="stat-val-tactics">110</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-name">📐 空間ライン把握 (Vision)</span>
+                <div class="stat-bar"><div class="stat-fill vision" id="stat-bar-vision" style="width:50%"></div></div>
+                <span class="stat-val" id="stat-val-vision">100</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-name">👑 指揮官カリスマ (Command)</span>
+                <div class="stat-bar"><div class="stat-fill command" id="stat-bar-command" style="width:60%"></div></div>
+                <span class="stat-val" id="stat-val-command">115</span>
+              </div>
+            </div>
+            <div class="battle-records">
+              <div>🏆 勝利数: <strong id="rec-wins">0</strong>回</div>
+              <div>⭐ 好手・妙手回数: <strong id="rec-good-moves">0</strong>回</div>
+              <div>🧩 パズル突破: <strong id="rec-puzzles">0</strong>問</div>
+            </div>
+          </div>
+
+          <div class="crew-collection-card">
+            <h3>🤝 仲間にしたチェス海賊団＆相棒モンスター</h3>
+            <div id="crew-modal-list" class="crew-cards-list"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル3：チェス初心者ルール＆必殺手筋図鑑 -->
+  <div id="guide-modal" class="modal-backdrop hidden">
+    <div class="modal-card large-modal">
+      <div class="modal-header">
+        <h2>📖 チェス・ルール＆3Dキャラクター駒図鑑</h2>
+        <button class="close-btn" onclick="UI.closeModal('guide-modal')">✖</button>
+      </div>
+      <div class="modal-body" id="guide-modal-content"></div>
+    </div>
+  </div>
+
+  <!-- モーダル4：ポーン進化（プロモーション）選択 -->
+  <div id="promo-modal" class="modal-backdrop hidden">
+    <div class="modal-card promo-modal-card">
+      <div class="modal-header">
+        <h2>✨ ポーンの超進化（プロモーション）！！</h2>
+      </div>
+      <div class="modal-body">
+        <p>ポーンが一番奥の段に到達したぞ！好きな3Dキャラクター駒に進化させよう！（最強のクイーンがおすすめ！）</p>
+        <div class="promo-choices">
+          <button class="promo-btn" onclick="Game.completePromotion('q')">
+            <span class="promo-icon">♕</span>
+            <strong>クイーン (Queen)</strong>
+            <small>縦・横・斜めどこでも進める最強の9点女帝！</small>
+          </button>
+          <button class="promo-btn" onclick="Game.completePromotion('r')">
+            <span class="promo-icon">♖</span>
+            <strong>ルーク (Rook)</strong>
+            <small>縦・横にまっすぐ進む5点ゴーレム城塞！</small>
+          </button>
+          <button class="promo-btn" onclick="Game.completePromotion('b')">
+            <span class="promo-icon">♗</span>
+            <strong>ビショップ (Bishop)</strong>
+            <small>斜めラインを支配する3点魔法僧侶！</small>
+          </button>
+          <button class="promo-btn" onclick="Game.completePromotion('n')">
+            <span class="promo-icon">♘</span>
+            <strong>ナイト (Knight)</strong>
+            <small>駒を飛び越えるL字ジャンプの3点ペガサス馬！</small>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- モーダル5：ステージ勝利・次章解放・仲間ゲット演出 -->
+  <div id="result-modal" class="modal-backdrop hidden">
+    <div class="modal-card result-modal-card">
+      <div class="result-banner" id="result-banner">🏆 VICTORY!! CHECKMATE!!</div>
+      <div class="modal-body result-body">
+        <div class="result-hero-icon" id="result-icon"></div>
+        <h3 id="result-title">見事なチェックメイトで完全勝利！！</h3>
+        <p id="result-desc">深く考え抜いた論理の力で、敵の守りを完全に突破したぞ！</p>
+        
+        <div class="reward-summary-box" id="result-rewards-box">
+          <div class="reward-item">✨ 獲得経験値: <strong id="res-exp">+150 EXP</strong></div>
+          <div class="reward-item">🪙 獲得ゴールド: <strong id="res-gold">+200 G</strong></div>
+        </div>
+
+        <div id="next-stage-unlock-notice" class="next-unlock-notice hidden"></div>
+
+        <div id="new-crew-unlock-box" class="new-crew-box hidden">
+          <div class="new-badge">🎉 NEW PARTNER GET!!</div>
+          <div class="new-crew-content">
+            <div class="nc-icon" id="nc-icon"></div>
+            <div>
+              <strong id="nc-name">新たな仲間が加わった！</strong>
+              <p id="nc-desc"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="secondary-btn" onclick="UI.closeModal('result-modal'); Game.restartStage();">🔄 もういちど戦う</button>
+        <button class="primary-btn large" onclick="UI.closeModal('result-modal'); UI.switchScreen('map');">🗺️ 次の海域（章）を確認する</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/sprites.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/chess.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>
